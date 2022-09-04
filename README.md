@@ -2,16 +2,14 @@
 
 This repo contains the relevant files for ....
 
-How to make CUBOTino autonomous: A small, 3D printed, Rubik’s cube solver robot
+How to make CUBOTone, my first Rubik’s cube solver robot
 ![title image](/images/title.jpg)
 
-Further robot info at: https://www.instructables.com/CUBOTino-Autonomous-Small-3D-Printed-Rubiks-Cube-R/
+Further robot info at: https://www.instructables.com/Rubik-Cube-Solver-Robot-With-Raspberry-Pi-and-Pica/
 
-An impression of the robot: https://youtu.be/dEOLhvVMcUg
+An impression of the robot: https://www.youtube.com/watch?v=oYRXe4NyJqs
 
-This is forked from the git repo made by heneault (thank you !!!); Updated to latest files versions.
-
-This git repo simplifies the download of the individual files and automates as much a possible the deployment to the raspberry pi
+This git repo simplifies the download of the individual files and automates as much a possible the deployment to the Raspberry Pi
 
 This installation has proved to work on different Raspberry Pi models; Please report in case you experience issues.
 
