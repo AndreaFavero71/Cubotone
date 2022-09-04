@@ -3,6 +3,7 @@
 This repo contains the relevant files for ....
 
 How to make CUBOTone, my first Rubik’s cube solver robot
+
 ![title image](/images/title.jpg)
 
 Further robot info at: https://www.instructables.com/Rubik-Cube-Solver-Robot-With-Raspberry-Pi-and-Pica/
