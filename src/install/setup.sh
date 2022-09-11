@@ -22,11 +22,17 @@ sed -i '/dtparam=spi/d' $CONFIG
 sed -i '/startx/d' $CONFIG
 sed -i '/gpu_mem/d' $CONFIG
 sed -i '/enable_uart/d' $CONFIG
+sed -i '/dtoverlay=uart2/d' $CONFIG
+sed -i '/dtoverlay=gpio-shutdown/d' $CONFIG
+sed -i '/dtoverlay=gpio-shutdown,gpio_pin=11/d' $CONFIG
 cat <<EOT >> $CONFIG
 dtparam=spi=on
 start_x=1
 gpu_mem=128
 enable_uart=1
+dtoverlay=uart2=on
+dtoverlay=gpio-shutdown=on
+dtoverlay=gpio-shutdown,gpio_pin=11
 EOT
 
 print_header "Updating packages"
@@ -39,7 +45,7 @@ apt autoremove -y
 
 print_header "Installing required packages"
 apt install -y -qq python3-rpi.gpio python3-pigpio python3-gpiozero python3-pil python3-pip python3-venv
-apt install -y -qq libatlas-base-dev python3-h5py libjasper-runtime libqtgui4 libqt4-test
+apt install -y -qq libatlas-base-dev python3-h5py libjasper-runtime libqtgui4 libqt4-test adafruit-pca9685
 
 print_header "Creating python virtual env"
 python3 -m venv .virtualenvs --system-site-packages
@@ -50,6 +56,7 @@ pip3 install numpy==1.21.4
 pip3 install "picamera[array]"
 pip3 install RubikTwoPhase==1.0.9
 pip3 install getmac==0.8.3
+sudo pip3 install adafruit-circuitpython-pca9685
 
 # hash for opencv for pizero seems to be bad on pywheel, bypass it for the moment. It is ok for pizero 2w
 machine=$(uname -m)
