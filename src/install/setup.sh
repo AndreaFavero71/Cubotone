@@ -45,7 +45,7 @@ apt autoremove -y
 
 print_header "Installing required packages"
 apt install -y -qq python3-rpi.gpio python3-pigpio python3-gpiozero python3-pil python3-pip python3-venv
-apt install -y -qq libatlas-base-dev python3-h5py libjasper-runtime libqtgui4 libqt4-test adafruit-pca9685
+apt install -y -qq libatlas-base-dev python3-h5py libjasper-runtime libqtgui4 libqt4-test
 
 print_header "Creating python virtual env"
 python3 -m venv .virtualenvs --system-site-packages
