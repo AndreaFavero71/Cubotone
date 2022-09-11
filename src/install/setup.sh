@@ -57,6 +57,7 @@ pip3 install getmac==0.8.3
 pip3 install adafruit-pca9685
 
 # hash for opencv for pizero seems to be bad on pywheel, bypass it for the moment. It is ok for pizero 2w
+# gpu mem limited on pizero
 machine=$(uname -m)
 if [ "$machine" == "armv6l" ]; then
 pip3 install https://www.piwheels.org/simple/opencv-contrib-python/opencv_contrib_python-4.1.0.25-cp37-cp37m-linux_armv6l.whl
@@ -77,8 +78,8 @@ gpu_mem=128
 EOT
 fi
 
-print_header "Configuring pigpiod to start on boot"
-systemctl enable pigpiod
+# print_header "Configuring pigpiod to start on boot"
+# systemctl enable pigpiod
 
 set +e
 
