@@ -19,13 +19,13 @@ This installation has proved to work on different Raspberry Pi models; Please re
 2. Put the sd card in the pi and power it. You can monitor the boot process if you connect an hdmi monitor to it but it is not essential. 
 3. Try to connect to the Raspberry Pi via SSH. On Windows you can use Putty. On linux and mac you can type directly:
 ```
-ssh pi@cubotino.local
+ssh pi@cubotone.local
 ```
 4. If you can’t reach the pi like this, you will have to scan your network to find the IP to use
 5. After you are connected via ssh, type the following commands in the shell:
 ```
-git clone https://github.com/AndreaFavero71/cubotino.git
-cd cubotino/src
+git clone https://github.com/AndreaFavero71/cubotone.git
+cd cubotone/src
 sudo ./install/setup.sh
 ```
 6. Make sure the script runs without error until the end. It should ask you to reboot. Type ‘y’ and hit enter. You should get the proper environment after reboot at that point
@@ -34,11 +34,11 @@ sudo ./install/setup.sh
 # Executing manually
 From a shell, you can run the main python script like this:
 ```
-cd ~/cubotino/src
+cd ~/cubotone/src
 source .virtualenvs/bin/activate
-python Cubotino_T.py
+python Cubotone.py
 ```
-of course, you can replace `Cubotino_T.py` by any other python scripts as mentioned in the documentation.
+of course, you can replace `Cubotone.py` by any other python scripts as mentioned in the documentation.
 
 
 # Enabling autostart
@@ -51,7 +51,7 @@ select the nano editor ‘1’ then go to the last line of the window and remove
 # VNC connection
 You can always connect with ssh. If you prefere VNC you can download the RealVNC client (this is the one I use). You just have that start it like this:
 ```
-vncviewer cubotino.local
+vncviewer cubotone.local
 ```
 It will ask for the credential. Use ‘pi’ and the same password you use for ssh. You should have a desktop version in this way
 
