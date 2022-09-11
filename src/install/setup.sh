@@ -19,6 +19,7 @@ systemctl --quiet set-default multi-user.target
 print_header "configuring config file"
 CONFIG=/boot/config.txt
 sed -i '/dtparam=spi/d' $CONFIG
+sed -i '/dtparam=i2c_arm/d' $CONFIG
 sed -i '/startx/d' $CONFIG
 sed -i '/gpu_mem/d' $CONFIG
 sed -i '/enable_uart/d' $CONFIG
@@ -27,11 +28,12 @@ sed -i '/dtoverlay=gpio-shutdown/d' $CONFIG
 sed -i '/dtoverlay=gpio-shutdown,gpio_pin=11/d' $CONFIG
 cat <<EOT >> $CONFIG
 dtparam=spi=on
+dtparam=i2c_arm=on
 start_x=1
 gpu_mem=128
 enable_uart=1
-dtoverlay=uart2=on
-dtoverlay=gpio-shutdown=on
+dtoverlay=uart2
+dtoverlay=gpio-shutdown
 dtoverlay=gpio-shutdown,gpio_pin=11
 EOT
 
