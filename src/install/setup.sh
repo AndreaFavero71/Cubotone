@@ -60,7 +60,6 @@ pip3 install adafruit-pca9685
 machine=$(uname -m)
 if [ "$machine" == "armv6l" ]; then
 pip3 install https://www.piwheels.org/simple/opencv-contrib-python/opencv_contrib_python-4.1.0.25-cp37-cp37m-linux_armv6l.whl
-
 print_header "configuring gpu mem in config file"
 CONFIG=/boot/config.txt
 sed -i '/gpu_mem/d' $CONFIG
@@ -70,7 +69,6 @@ EOT
 
 else
 pip3 install opencv-contrib-python==4.1.0.25
-
 print_header "configuring gpu mem in config file"
 CONFIG=/boot/config.txt
 sed -i '/gpu_mem/d' $CONFIG
