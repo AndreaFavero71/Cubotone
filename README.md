@@ -15,7 +15,7 @@ This git repo simplifies the download of the individual files and automates as m
 This installation has proved to work on different Raspberry Pi models; Please report in case you experience issues.
 
 # How to use it:
-1. Flash your SD card according to the procedure in the [document here](doc/SD and Rpi settings_20211003.pdf) , Step 1
+1. Flash your SD card according to the procedure in the [document here](doc/SD_and_Rpi_settings_20211003.pdf) , Step 1
 2. Put the sd card in the pi and power it. You can monitor the boot process if you connect an hdmi monitor to it but it is not essential. 
 3. Try to connect to the Raspberry Pi via SSH. On Windows you can use Putty. On linux and mac you can type directly:
 ```
