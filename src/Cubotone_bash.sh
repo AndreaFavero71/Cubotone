@@ -8,8 +8,8 @@
 # 
 #################################################################################################
 
-source /home/pi/.virtualenvs/cv/bin/activate
-cd /home/pi/cube/kociemba
+source /home/pi/cubotone/src/.virtualenvs/bin/activate
+cd /home/pi/cubotone/src
 
 i=1
 printf "\r\r\r\r\r###############################################\r\r"
@@ -43,7 +43,7 @@ while true; do
     printf "Re-starting Cubotone.py, from the bash script\r"
     ((i=i+1))
     echo "cycle number: $i"
-    cd /home/pi/cube/kociemba
+    cd /home/pi/cubotone/src
     python Cubotone.py
   fi
   sleep 5
@@ -51,4 +51,4 @@ while true; do
 done
 
 deactivate
-cd /home/pi
+cd /home/pi/cubotone
