@@ -3,7 +3,7 @@
 
 """
 #############################################################################################################
-# Andrea Favero 03 September 2022
+# Andrea Favero 10 September 2022
 #
 # This script relates to CUBOTone, my first simple Rubik's cube solver robot
 # This specific script controls two servos, one stepper motor, and led module
@@ -23,12 +23,12 @@
 """
 
 
-from adafruit_pca9685 import PCA9685 # Import the PCA9685 module, used to control two servos via the I2C
-import busio
+import Adafruit_PCA9685              # Import the PCA9685 module, used to control two servos via the I2C
 import RPi.GPIO as GPIO              # import RPi GPIO
 import time
 from time import sleep
 
+# setting GPIO mode
 GPIO.setmode(GPIO.BCM)               # setting GPIO pins as "Broadcom SOC channel" number, these are the numbers after "GPIO"
 GPIO.setwarnings(False)              # setting GPIO to don't return allarms
 
@@ -45,17 +45,14 @@ GPIO.setup(stepper_dir,GPIO.OUT)     # GPIO pin used to control the stepper moto
 GPIO.setup(stepper_step,GPIO.OUT)    # GPIO pin used to generate the stepper motor steps is set as output
 GPIO.setup(stepper_ms2,GPIO.OUT)     # GPIO pin used to change the stepper motor micro-step (MS2) is set as output
 
-
-
-
 # light_gate GPIO pin
 light_gate = 4                       # GPIO pin used to for the light_gate input signal
 
 # light_gate GPIO pin setting
 GPIO.setup(4,GPIO.IN)                # motor position sensor
 
-
-pwm = PCA9685(3,2)               # Initialise the PCA9685 using the default address (0x40).
+# setting the PCA9685 board
+pwm = Adafruit_PCA9685.PCA9685()     # Initialise the PCA9685 using the default address (0x40).
 pwm.set_pwm_freq(60)                 # sets the frequency to 60hz, good for servos.
 
 # servos GPIO pins 
@@ -69,7 +66,8 @@ led1=13                              # GPIO pin used to control the led1 on top 
 led2=12                              # GPIO pin used to control the led2 on top cover 
 pwm.set_pwm(led1, 0, 0)              # led1 is forced off
 pwm.set_pwm(led2, 0, 0)              # led2 is forced off
-  
+ 
+
 
 
 def init_servo(servos_init, debug):
