@@ -76,6 +76,7 @@ CONFIG=/boot/config.txt
 sed -i '/gpu_mem/d' $CONFIG
 cat <<EOT >> $CONFIG
 gpu_mem=128
+EOT
 fi
 
 print_header "Configuring pigpiod to start on boot"
