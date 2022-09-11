@@ -20,7 +20,6 @@ print_header "configuring config file"
 CONFIG=/boot/config.txt
 sed -i '/dtparam=i2c_arm/d' $CONFIG
 sed -i '/startx/d' $CONFIG
-sed -i '/gpu_mem/d' $CONFIG
 sed -i '/enable_uart/d' $CONFIG
 sed -i '/dtoverlay=uart2/d' $CONFIG
 sed -i '/dtoverlay=gpio-shutdown/d' $CONFIG
@@ -28,7 +27,6 @@ sed -i '/dtoverlay=gpio-shutdown,gpio_pin=11/d' $CONFIG
 cat <<EOT >> $CONFIG
 dtparam=i2c_arm=on
 start_x=1
-gpu_mem=128
 enable_uart=1
 dtoverlay=uart2
 dtoverlay=gpio-shutdown
@@ -62,8 +60,20 @@ pip3 install adafruit-pca9685
 machine=$(uname -m)
 if [ "$machine" == "armv6l" ]; then
 pip3 install https://www.piwheels.org/simple/opencv-contrib-python/opencv_contrib_python-4.1.0.25-cp37-cp37m-linux_armv6l.whl
+print_header "configuring gpu mem"
+CONFIG=/boot/config.txt
+sed -i '/gpu_mem/d' $CONFIG
+cat <<EOT >> $CONFIG
+gpu_mem=128
+EOT
+
 else
 pip3 install opencv-contrib-python==4.1.0.25
+print_header "configuring gpu mem"
+CONFIG=/boot/config.txt
+sed -i '/gpu_mem/d' $CONFIG
+cat <<EOT >> $CONFIG
+gpu_mem=128
 fi
 
 print_header "Configuring pigpiod to start on boot"
