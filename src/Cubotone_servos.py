@@ -23,7 +23,8 @@
 """
 
 
-import Adafruit_PCA9685              # Import the PCA9685 module, used to control two servos via the I2C
+from adafruit_pca9685 import PCA9685 # Import the PCA9685 module, used to control two servos via the I2C
+import busio
 import RPi.GPIO as GPIO              # import RPi GPIO
 import time
 from time import sleep
@@ -54,7 +55,7 @@ light_gate = 4                       # GPIO pin used to for the light_gate input
 GPIO.setup(4,GPIO.IN)                # motor position sensor
 
 
-pwm = Adafruit_PCA9685.PCA9685()     # Initialise the PCA9685 using the default address (0x40).
+pwm = PCA9685(3,2)               # Initialise the PCA9685 using the default address (0x40).
 pwm.set_pwm_freq(60)                 # sets the frequency to 60hz, good for servos.
 
 # servos GPIO pins 
@@ -888,7 +889,4 @@ def test5():
     servo_start_positions(s_debug)
     servo_off(s_debug)
     motor_off(s_debug)
-
-
-
 
