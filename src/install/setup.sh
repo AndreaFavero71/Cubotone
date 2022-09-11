@@ -56,7 +56,7 @@ pip3 install numpy==1.21.4
 pip3 install "picamera[array]"
 pip3 install RubikTwoPhase==1.0.9
 pip3 install getmac==0.8.3
-sudo pip3 install adafruit-circuitpython-pca9685
+pip3 install adafruit-pca9685
 
 # hash for opencv for pizero seems to be bad on pywheel, bypass it for the moment. It is ok for pizero 2w
 machine=$(uname -m)
