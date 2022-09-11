@@ -1,4 +1,4 @@
-# CUBOTino autonomous
+# CUBOTone
 
 This repo contains the relevant files for ....
 
