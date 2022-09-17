@@ -18,7 +18,7 @@
 "sv_max_time": "2",
 "collage_w": "1024",
 "marg_coef": "0.1",
-"cam_led_bright": "600",
+"cam_led_bright": "300",
 "detect_timeout": "40",
 "show_time": "7",
 "gap_w": "60",
