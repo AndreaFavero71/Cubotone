@@ -3,7 +3,7 @@
 
 """
 #############################################################################################################
-# Andrea Favero 10 September 2022
+# Andrea Favero   rev. 17 September 2022
 #
 # This script relates to CUBOTone, my first simple Rubik's cube solver robot
 # This specific script controls two servos, one stepper motor, and led module
@@ -22,22 +22,25 @@
 #############################################################################################################
 """
 
-
 import Adafruit_PCA9685              # Import the PCA9685 module, used to control two servos via the I2C
 import RPi.GPIO as GPIO              # import RPi GPIO
 import time
 from time import sleep
 
-# setting GPIO mode
-GPIO.setmode(GPIO.BCM)               # setting GPIO pins as "Broadcom SOC channel" number, these are the numbers after "GPIO"
-GPIO.setwarnings(False)              # setting GPIO to don't return allarms
-
-
-# stepper motor GPIO pins
+# GPIO pins assigments
 stepper_enable = 22                  # GPIO pin used to ebale/disable the stepper motor driver
 stepper_dir = 17                     # GPIO pin used to control the stepper motor direction 
 stepper_step = 27                    # GPIO pin used to generate the stepper motor steps
 stepper_ms2 = 5                      # GPIO pin used to change the stepper motor micro-step
+light_gate = 4                       # GPIO pin used to for the light_gate input signal
+srv_cover = 15                       # GPIO pin used to control the top cover servo 
+srv_flipper = 14                     # GPIO pin used to control the flipper servo
+led1=13                              # GPIO pin used to control the led1 on top cover 
+led2=12                              # GPIO pin used to control the led2 on top cover 
+
+# overall GPIO settings
+GPIO.setmode(GPIO.BCM)               # setting GPIO pins as "Broadcom SOC channel" number, these are the numbers after "GPIO"
+GPIO.setwarnings(False)              # setting GPIO to don't return allarms
 
 # stepper motor GPIO pins settings
 GPIO.setup(stepper_enable,GPIO.OUT)  # GPIO pin used to ebale/disable the stepper motor driver is set as output
@@ -45,29 +48,17 @@ GPIO.setup(stepper_dir,GPIO.OUT)     # GPIO pin used to control the stepper moto
 GPIO.setup(stepper_step,GPIO.OUT)    # GPIO pin used to generate the stepper motor steps is set as output
 GPIO.setup(stepper_ms2,GPIO.OUT)     # GPIO pin used to change the stepper motor micro-step (MS2) is set as output
 
-# light_gate GPIO pin
-light_gate = 4                       # GPIO pin used to for the light_gate input signal
-
 # light_gate GPIO pin setting
 GPIO.setup(4,GPIO.IN)                # motor position sensor
 
-# setting the PCA9685 board
+# Adafruit 16-Channel 12-bit PWM/Servo Driver - I2C interface - PCA9685
 pwm = Adafruit_PCA9685.PCA9685()     # Initialise the PCA9685 using the default address (0x40).
 pwm.set_pwm_freq(60)                 # sets the frequency to 60hz, good for servos.
-
-# servos GPIO pins 
-srv_cover = 15                       # GPIO pin used to control the top cover servo 
-srv_flipper = 14                     # GPIO pin used to control the flipper servo
-pwm.set_pwm(srv_cover, 0, 4095)      # servo is forced off
-pwm.set_pwm(srv_flipper, 0, 4095)    # servo is forced off
-
-# leds GPIO pins
-led1=13                              # GPIO pin used to control the led1 on top cover 
-led2=12                              # GPIO pin used to control the led2 on top cover 
-pwm.set_pwm(led1, 0, 0)              # led1 is forced off
-pwm.set_pwm(led2, 0, 0)              # led2 is forced off
- 
-
+pwm.set_pwm(srv_cover, 0, 0)         # servo is forced off
+pwm.set_pwm(srv_flipper, 0, 0)       # servo is forced off
+pwm.set_pwm(led1, 0, 0)              # led1 is forced off, 60Hz is ok to set the output off for the led
+pwm.set_pwm(led2, 0, 0)              # led2 is forced off, 60Hz is ok to set the output off for the led
+  
 
 
 def init_servo(servos_init, debug):
@@ -152,7 +143,7 @@ def init_servo(servos_init, debug):
                     motor_reversed = 1
 
                 servo_start_positions(debug)
-                led_test()
+                led_test(debug)
                 led_off()
                 servos_init = True                                                # servos_init_status variable is set True
                 
@@ -174,30 +165,40 @@ def init_servo(servos_init, debug):
 
 
 def servo_freq(debug):
-    pwm.set_pwm_freq(60)                        # sets the frequency to 60hz
+    """sets the PCA9685 output frequency for the servo. Servo require tipically 60Hz."""
+    
+    pwm.set_pwm_freq(60)                        # sets the frequency to 60Hz
     time.sleep(0.05)                            # little time sleep to let the parameter change to get processed by the PCA 9685 board
-    if debug:                                   # case the variable debug is set True
-        print('frequency to 60Hz to PCA 9685 board, for servo control') # feedback is printed to the terminal
+#     if debug:                                   # case the variable debug is set True
+#         print('frequency to 60Hz to PCA 9685 board, for servo control') # feedback is printed to the terminal
 
 
 
 
 
 def led_freq(debug):
-    pwm.set_pwm_freq(1000)                      # sets the frequency to 1000hz
+    """sets the PCA9685 output frequency for the leds. PWM Leds at 60Hz is bad for the camera, and at least 1KHz needed."""
+    
+    servo_off(debug=False)                      # set the servo to off, to prevent unexpected reaction at the frequency change
+    pwm.set_pwm_freq(1000)                      # sets the frequency to 1000Hz
     time.sleep(0.05)                            # little time sleep to let the parameter change to get processed by the PCA 9685 board
-    if debug:                                   # case the variable debug is set True
-        print('frequency set to 1500Hz to PCA 9685 board, for led control') # feedback is printed to the terminal
+#     if debug:                                   # case the variable debug is set True
+#         print('frequency set to 1000Hz to PCA 9685 board, for led control') # feedback is printed to the terminal
 
 
 
 
 
-def servo_start_positions(debug):
+def servo_start_positions(debug,wait_time=True):
     """initial position for the top cover and cube flipper; The parameter defines the sleep time before returning"""
+    
+    servo_freq(debug)
     read_cover()                                # initial position for the cover is fully high, to prevent interference with base rotation while zeroing it                             
+    if wait_time:                               # case wait_time in ar is left as per default
+        time.sleep(0.4)                         # extra time to ensure the parts are moved and the innertia has dropped
     cube_flipper_low(time_flipper_low)          # initial position for the flipper is fully high, to prevent interference with base rotation while zeroing it
-    time.sleep(0.7)                             # extra time to ensure the parts are moved and the innertia has dropped
+    if wait_time:                               # case wait_time in ar is left as per default
+        time.sleep(0.4)                         # extra time to ensure the parts are moved and the innertia has dropped
     if debug:                                   # case the variable debug is set True
         print('servos to the start position')   # feedback is printed to the terminal
 
@@ -206,9 +207,11 @@ def servo_start_positions(debug):
 
 def servo_off(debug):
     """disable the servo."""
-    pwm.set_pwm(srv_cover, 0, 4095)        # servo is forced off, in case the target wasn't reached in time (blocked movement)
-    pwm.set_pwm(srv_flipper, 0, 4095)      # servo is forced off, in case the target wasn't reached in time (blocked movement)
-    if debug:                            # case the variable debug is set True
+    
+    time.sleep(0.2)                        # some little wait time to ensure servos have completed the eventual movement, prior removing the PWM
+    pwm.set_pwm(srv_cover, 0, 0)           # servo is forced off, in case the target wasn't reached in time (blocked movement)
+    pwm.set_pwm(srv_flipper, 0, 0)         # servo is forced off, in case the target wasn't reached in time (blocked movement)
+    if debug:                              # case the variable debug is set True
         print('servos are disabled')       # feedback is printed to the terminal
 
 
@@ -235,9 +238,10 @@ def led_off():
 
 
 
-def led_test():
+def led_test(debug):
     """ Fade the led On and Off at the init, to show the led worwing."""
     
+    led_freq(debug)
     for i in range(0,800,50):            # iterates from 0 to 700 in steps of 100
         pwm.set_pwm(led1, 0, i)           # led1 is energized at iterator value
         pwm.set_pwm(led2, 0, i)           # led2 is energized at iterator value
@@ -247,6 +251,7 @@ def led_test():
         pwm.set_pwm(led1, 0, i)           # led1 is energized at iterator value
         pwm.set_pwm(led2, 0, i)           # led2 is energized at iterator value
         time.sleep(0.01)                  # very short time sleep
+    servo_freq(debug)
 
 
 
@@ -461,18 +466,23 @@ def align_motor(debug, cover='read'):
         if debug:                                        # case the variable debug is set True
             print('\nsynch disk slot already located at the ligh_gate') # feedback is printed to the terminal
         GPIO.output(stepper_enable,GPIO.LOW)             # enable motor, to maintain the cube holder forced in the aligned position
+        if cover == 'read':                              # case the top_cover is in 'read' position
+            servo_start_positions(debug, False)          # servos are set to the start position
+#         elif cover == 'open':                            # case the top_cover is in 'open' position
+#             open_cover()                                 # top_cover is opened
         alignment_ok = True                              # boolean alignment_ok is set true
         return alignment_ok                              # function is terminated
+    
     else:                                                # case the light_gate sensor is sensing the sync disk slot
-        if debug:                                        # case the variable debug is set True
-            print('\nsynch disk slot not located at the ligh_gate')     # feedback is printed to the terminal
-            print("motor alignment to the motor's sensor")              # feedback is printed to the terminal
-
+#         if debug:                                        # case the variable debug is set True
+        print('\nsynch disk slot not located at the ligh_gate')     # feedback is printed to the terminal
+        print("motor alignment to the motor's sensor")              # feedback is printed to the terminal
     if cover == 'read':                                  # case the top_cover is in 'read' position
-        servo_start_positions(debug)                     # servos are set to the start position
-    elif cover == 'open':                                # case the top_cover is in 'open' position
-        open_cover()                                     # top_cover is opened
-
+        servo_start_positions(debug, False)              # servos are set to the start position
+#     elif cover == 'open':                                # case the top_cover is in 'open' position
+#         open_cover()                                     # top_cover is opened
+    
+    reverse_main_align_dir = False
     alignment_timeout = False                            # boolean alignment_ok is set initially false
     align_start_time = time.time()                       # current time iss assigned to the align_start_time variable
 
@@ -514,29 +524,23 @@ def align_motor(debug, cover='read'):
                 time.sleep(on_time)                      # set the pulse ON time
                 GPIO.output(stepper_step,GPIO.LOW)       # set motor's GPIO low for
                 time.sleep(off_time)                     # set the pulse OFF time
-                position += 1              # position counter is used to check if the out of position is greater than 45degrees (>200 microsteps)                 
+                position += 1              # position counter is used to check if the out of position is greater than 45degrees (>200 microsteps, or > stp_rev)
+                
+                if position > stp_rev:                          # case the rotation was taking more than 45 degrees
+                    if debug:                                   # case the variable debug is set True
+                        print('reversed the main alignment direction') # feedback is printed to the terminal
+                    if motor_reversed:                          # case the motor_reversed is set True
+                        GPIO.output(stepper_dir,GPIO.LOW)       # motor is set to CCW direction
+                    else:                                       # case the motor_reversed is set False
+                        GPIO.output(stepper_dir,GPIO.HIGH)      # motor is set to CCW direction
+                    time.sleep(0.01)                            # short delay after motor direction setting
+                    reverse_main_align_dir=True
+                    break
             
-            if alignment_timeout == False:               # case alignment_timeout variable is false
-                for i in range(extra_steps):             # extra rotation to be sure to stop with the sensor into the sync disk slot
-                    GPIO.output(stepper_step,GPIO.HIGH)  # set GPIO high for one motor step
-                    time.sleep(on_time)                  # set the pulse ON time
-                    GPIO.output(stepper_step,GPIO.LOW)   # set motor's GPIO low for
-                    time.sleep(off_time)                 # set the pulse OFF time
-                    position += 1          # position counter is used to check if the out of position is greater than 45degrees (>200 microsteps) 
-            time.sleep(0.02)
-
-        
-        if alignment_timeout == False:                       # case alignment_timeout variable is false
-            # precise alignment starts here, with CW rotation
-            for i in range(align_repeats):                   # the alignment function does max 2 attempts
-                if debug:                                    # case the variable debug is set True
-                    print('alignment attempt number:', i+1)  # feedback is printed to the terminal    
-                    
-                width = 0                                    # counter for the motor's step while the sensor is active through the opening slots
-                on_time = time_on_align_precise              # (AF 0.0012) set the pulse ON time for precise alignment
-                off_time=on_time*2.5                         # set pulse OFF time
-                while not GPIO.input(light_gate):            # keeps rotating until the sensor goes off (slot beginning)
-                    if time.time()-align_start_time > timeout:    # case the alignment takes more than 2 seconds
+            
+            if reverse_main_align_dir:
+                while GPIO.input(light_gate):                # motor rotates until fist sensor ON reaction
+                    if time.time()-align_start_time > timeout:     # case the alignment takes more than 2 seconds
                         if alignment_timeout == False:       # case alignment_timeout variable is false
                             alignment_timeout = True         # alignment_timeout variable is set true
                             print('alignment timeout\n')     # feedback is printed to the terminal
@@ -547,16 +551,55 @@ def align_motor(debug, cover='read'):
                     time.sleep(on_time)                      # set the pulse ON time
                     GPIO.output(stepper_step,GPIO.LOW)       # set motor's GPIO low for
                     time.sleep(off_time)                     # set the pulse OFF time
+    
+            
+            
+            if alignment_timeout == False:               # case alignment_timeout variable is false
+                print()
+                for i in range(extra_steps):             # extra rotation to be sure to stop with the sensor into the sync disk slot
+                    GPIO.output(stepper_step,GPIO.HIGH)  # set GPIO high for one motor step
+                    time.sleep(on_time)                  # set the pulse ON time
+                    GPIO.output(stepper_step,GPIO.LOW)   # set motor's GPIO low for
+                    time.sleep(off_time)                 # set the pulse OFF time
+            time.sleep(0.02)
+
+        
+        if alignment_timeout == False:                       # case alignment_timeout variable is false
+            # precise alignment starts here, proceeding with the same main alignment rotation direction 
+            for i in range(align_repeats):                   # the alignment function does max 2 attempts
+                if debug:                                    # case the variable debug is set True
+                    print('alignment attempt number:', i+1)  # feedback is printed to the terminal    
+                width = 0                                    # counter for the motor's step while the sensor is active through the opening slots
+                on_time = time_on_align_precise              # (AF 0.0012) set the pulse ON time for precise alignment
+                off_time=on_time*2.5                         # set pulse OFF time
+                while not GPIO.input(light_gate):            # keeps rotating until the sensor goes off (slot beginning)
+                    if time.time()-align_start_time > timeout:    # case the alignment takes more than 2 seconds
+                        if alignment_timeout == False:       # case alignment_timeout variable is false
+                            alignment_timeout = True         # alignment_timeout variable is set true
+                            print('alignment timeout\n')     # feedback is printed to the terminal
+                            alignment_ok = False             # boolean alignment_ok is set false
+                            return alignment_ok              # function is terminated
+                    GPIO.output(stepper_step,GPIO.HIGH)      # set GPIO high for one motor step
+                    time.sleep(on_time)                      # set the pulse ON time
+                    GPIO.output(stepper_step,GPIO.LOW)       # set motor's GPIO low for
+                    time.sleep(off_time)                     # set the pulse OFF time
                 for i in range(extra_steps):                 # extra rotation to be sure to stop after the "on" sensor slot
                     GPIO.output(stepper_step,GPIO.HIGH)      # set GPIO high for one motor step
                     time.sleep(on_time)                      # set the pulse ON time
                     GPIO.output(stepper_step,GPIO.LOW)       # set motor's GPIO low for
                     time.sleep(off_time)                     # set the pulse OFF time
                 time.sleep(0.02)
-                if motor_reversed:                           # case the motor_reversed is set True
-                    GPIO.output(stepper_dir,GPIO.LOW)        # motor is set to CCW direction
-                else:                                        # case the motor_reversed is set False
-                    GPIO.output(stepper_dir,GPIO.HIGH)       # motor is set to CCW direction
+                
+                if reverse_main_align_dir:                   # case the main alignment direction has been reversed
+                    if motor_reversed:                       # case the motor_reversed is set True
+                        GPIO.output(stepper_dir,GPIO.HIGH)   # motor is set to CW direction
+                    else:                                    # case the motor_reversed is set False
+                        GPIO.output(stepper_dir,GPIO.LOW)    # motor is set to CW direction
+                elif not reverse_main_align_dir:             # case the main alignment direction has not been reversed
+                    if motor_reversed:                       # case the motor_reversed is set True
+                        GPIO.output(stepper_dir,GPIO.LOW)    # motor is set to CCW direction
+                    else:                                    # case the motor_reversed is set False
+                        GPIO.output(stepper_dir,GPIO.HIGH)   # motor is set to CCW direction
                 time.sleep(0.02)
                 
                 if alignment_timeout == False:               # case alignment_timeout variable is false
@@ -584,11 +627,19 @@ def align_motor(debug, cover='read'):
                 if debug:                                    # case the variable debug is set True 
                     print('sync disk slot width, in stepper steps:', width)        # feedback is printed to the terminal 
                 
-                if motor_reversed:                           # case the motor_reversed is set True
-                    GPIO.output(stepper_dir,GPIO.HIGH)       # motor is set to CW direction
-                else:                                        # case the motor_reversed is set False
-                    GPIO.output(stepper_dir,GPIO.LOW)        # motor is set to CW direction
-                time.sleep(0.02)                             # small delay after setting change
+                if reverse_main_align_dir:                   # case the main alignment direction has been reversed
+                    if motor_reversed:                       # case the motor_reversed is set True
+                        GPIO.output(stepper_dir,GPIO.LOW)    # motor is set to CCW direction
+                    else:                                    # case the motor_reversed is set False
+                        GPIO.output(stepper_dir,GPIO.HIGH)   # motor is set to CCW direction
+                    time.sleep(0.02)                         # small delay after setting change
+                
+                elif not reverse_main_align_dir:             # case the main alignment direction has not been reversed
+                    if motor_reversed:                       # case the motor_reversed is set True
+                        GPIO.output(stepper_dir,GPIO.HIGH)   # motor is set to CW direction
+                    else:                                    # case the motor_reversed is set False
+                        GPIO.output(stepper_dir,GPIO.LOW)    # motor is set to CW direction
+                    time.sleep(0.02)                         # small delay after setting change
                 
                 positioning = int(width/2)                   # half slot is considered
                 if debug:                                    # case the variable debug is set True 
@@ -615,20 +666,19 @@ def align_motor(debug, cover='read'):
         GPIO.output(stepper_ms2,GPIO.LOW)               # microstep disabled (from 1/8 step to 1/2 step)
         time.sleep(0.05)                                # small delay after setting change
         
-        
-        if position > stp_rev:   # case motor alignment took more than 45 degress (stp_rev steps, once in microsteps) a cube face rotation is needed (CCW)
-            if not alignment_timeout:                   # case alignment_timeout variable is false
-                if cover == 'read' or cover == 'open':  # case the top_cover is in 'read' or 'open' position
-                    spin(-1, debug, 'high')             # the cube_holder is rotated back by one quarter of revolution, at high speed
-                else:                                   # case the top_cover is not in 'read' or 'open' position
-                    spin(-1, debug, 'low')              # the cube_holder is rotated back by one quarter of revolution, at low speed
-                
-                if debug:                               # case the variable debug is set True
-                    time.sleep(0.2)                     # little delay to allows the cube holder stopping from inertia
-                    if sensor_check():                  # sensor is verified (1= sync disk slot at light_gate)
-                        print('quarter of revolution back, alignment is OK')        # feedback is printed to the terminal
-                    else:                               # sensor is not found as ok once the motor stops
-                        print('quarter of revolution back, alignment not perfect')  # feedback is printed to the terminal
+#         if position > stp_rev:   # case motor alignment took more than 45 degress (stp_rev steps, once in microsteps) a cube face rotation is needed (CCW)
+#             if not alignment_timeout:                   # case alignment_timeout variable is false
+#                 if cover == 'read' or cover == 'open':  # case the top_cover is in 'read' or 'open' position
+#                     spin(-1, debug, 'high')             # the cube_holder is rotated back by one quarter of revolution, at high speed
+#                 else:                                   # case the top_cover is not in 'read' or 'open' position
+#                     spin(-1, debug, 'low')              # the cube_holder is rotated back by one quarter of revolution, at low speed
+#                 
+#                 if debug:                               # case the variable debug is set True
+#                     time.sleep(0.2)                     # little delay to allows the cube holder stopping from inertia
+#                     if sensor_check():                  # sensor is verified (1= sync disk slot at light_gate)
+#                         print('quarter of revolution back, alignment is OK')        # feedback is printed to the terminal
+#                     else:                               # sensor is not found as ok once the motor stops
+#                         print('quarter of revolution back, alignment not perfect')  # feedback is printed to the terminal
     
     if alignment_timeout or not alignment_ok:           # case alignment_timeout variable is true or alignmento_ok is false
         motor_off(debug)                                # motor is de-energized
@@ -756,7 +806,7 @@ def cube_scrambler(robot_moves='a'):
 #             time.sleep(0.05)
         i+=1
     
-    servo_start_positions()
+    servo_start_positions(s_debug)
     motor_off()
     stop=time.time()
     print(f'Scramble time: {round(stop-start,1)} seconds')
@@ -888,3 +938,16 @@ def test5():
     servo_off(s_debug)
     motor_off(s_debug)
 
+
+
+
+def test6():
+    align_motor(s_debug)
+    open_cover()
+    for i in range(30):
+        print('\n',i)
+        led_test(debug=False)
+        open_cover()
+        
+
+        
