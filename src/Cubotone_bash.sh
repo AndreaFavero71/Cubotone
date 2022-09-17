@@ -4,7 +4,7 @@
 #  This bash script activates the venv, and starts the Cubotone.py script IF the push button (GPIO13) isn't pressed.    
 #  When quitting Cubotone.py, by pressing the same button, there are two possible situations:   
 # --> The button is maintained pressed for at least other 5 secs: The infinite loop at bash script ends 
-# --> The button is not maintained pressd that long, then the infinite loop at bash re-launches Cubotone.py 
+# --> The button is not maintained pressed that long, then the infinite loop at bash re-launches Cubotone.py 
 # 
 #################################################################################################
 
