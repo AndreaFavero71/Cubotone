@@ -1,16 +1,12 @@
 {
 "camera_width_res": "800",
 "camera_hight_res": "544",
-"zoom_x":0,
-"zoom_y":0.02,
-"zoom_w":0.75,
-"zoom_h":0.82,
+"zoom_x":0.0,
+"zoom_y":0.0,
+"zoom_w":1,
+"zoom_h":1,
 "kl": "0.95",
 "scale_perc": "65",
-"x_l": "0",
-"x_r": "0",
-"y_u": "0",
-"y_b": "0",
 "square_ratio": "2",
 "rhombus_ratio": "0",
 "delta_area_limit": "0.7",
@@ -18,10 +14,9 @@
 "sv_max_time": "2",
 "collage_w": "1024",
 "marg_coef": "0.1",
-"cam_led_bright": "1000",
+"cam_led_bright": "300",
 "detect_timeout": "40",
 "show_time": "7",
 "gap_w": "60",
 "gap_h": "100"
-
 }
