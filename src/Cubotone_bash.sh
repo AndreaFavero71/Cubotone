@@ -8,8 +8,11 @@
 # 
 #################################################################################################
 
-source /home/pi/.virtualenvs/cv/bin/activate
-cd /home/pi/cube/kociemba
+# source /home/pi/.virtualenvs/cv/bin/activate
+# cd /home/pi/cube/kociemba
+
+source /home/pi/cubotone/src/.virtualenvs/bin/activate
+cd /home/pi/cubotone/src
 
 i=1
 printf "\r\r\r\r\r###############################################\r\r"
