@@ -1,8 +1,6 @@
 # CUBOTone
 
-This repo contains the relevant files for ....
-
-How to make CUBOTone, my first Rubik’s cube solver robot.<br />
+This repo contains the files to build CUBOTone, my first Rubik’s cube solver robot.<br />
 CUBOTone uses servos and stepper motor resulting in a faster solving time than the newer CUBOTino series.
 
 ![title image](/images/title.jpg)
