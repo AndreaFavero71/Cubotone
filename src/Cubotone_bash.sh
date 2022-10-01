@@ -8,16 +8,14 @@
 # 
 #################################################################################################
 
-# source /home/pi/.virtualenvs/cv/bin/activate
-# cd /home/pi/cube/kociemba
-
 source /home/pi/cubotone/src/.virtualenvs/bin/activate
 cd /home/pi/cubotone/src
 
 i=1
-printf "\r\r\r\r\r###############################################\r\r"
-printf "Starting Cubotone.py, from the bash script\r"
-echo "cycle number: $i"
+printf "\r\n\n\n\n###############################################\r\n"
+printf "Starting Cubotone.py, from the bash script\r\n"
+printf "cycle number: $i \r"
+printf "\r###############################################\r\n"
 python Cubotone.py
 
 # setting the GPIO pin function
@@ -25,33 +23,43 @@ set_input()
 {
 # pin 13 is used either to start the robot (short pressing time) and to stop it (long pressing time)
 GPIO=13
+if [ -d "/sys/class/gpio/gpio"${GPIO} ]; then           # gpio folder does exist
+  # printf "GPIO: ${GPIO} already exported\r\n"           # print feedbact to terminal
+  echo "in" > /sys/class/gpio/gpio${GPIO}/direction     # set gpio as input
 
-if [ ! -d /sys/class/gpio/gpio${GPIO} ]; then
-  echo "${GPIO}" > /sys/class/gpio/export
-  echo "in" > /sys/class/gpio/gpio"${GPIO}"/direction
-else
-  echo "in" > /sys/class/gpio/gpio"${GPIO}"/direction
+else                                                    # gpio folder does not exist
+  # printf "exporting GPIO: ${GPIO}\r\n"                  # print feedbact to terminal
+  echo "${GPIO}" > /sys/class/gpio/export               # export gpio
+  echo "in" > /sys/class/gpio/gpio${GPIO}/direction     # set gpio as input
+
 fi
 }
+
 
 while true; do
   set_input
 
-  if [ 0 == "$(</sys/class/gpio/gpio"${GPIO}"/value)" ]; then
+  if [ 0 == "$(</sys/class/gpio/gpio${GPIO}/value)" ]; then
     printf "Quitting the bash script\n"
     break
 
   else
-    printf "\r\r\r\r\r###############################################\r\r"
-    printf "Re-starting Cubotone.py, from the bash script\r"
+    printf "\r\n\n\n\n###############################################\r\n"
+    printf "Re-starting Cubotone.py, from the bash script\r\n"
     ((i=i+1))
-    echo "cycle number: $i"
-    cd /home/pi/cube/kociemba
+    printf "cycle number: $i \r"
+    printf "\r###############################################\r\n"
+    cd /home/pi/cubotone/src
     python Cubotone.py
   fi
   sleep 5
 
 done
+
+if [ -d "/sys/class/gpio/gpio"${GPIO} ]; then
+  echo "${GPIO}" > /sys/class/gpio/unexport             # unexport gpio
+  # printf "unexporting GPIO: ${GPIO}\r\n"                # print feedbact to terminal
+fi
 
 deactivate
 cd /home/pi
