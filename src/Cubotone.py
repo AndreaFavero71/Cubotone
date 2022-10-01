@@ -4,7 +4,7 @@
 
 """ 
 #############################################################################################################
-#  Andrea Favero   rev. 17 September 2022
+#  Andrea Favero   rev. 01 October 2022
 #
 #  While dealing with Covid 19 pandemic on 2021, and turning 50 years old, I thought a Rubik's cube
 #  solver robot to be a nice challenge, to learn computer vision and to improve my coding skills.
@@ -47,7 +47,6 @@ def import_parameters():
     
     global sv, camera_width_res, camera_hight_res
     global zoom_x, zoom_y, zoom_w, zoom_h, kl, scale_perc, square_ratio, rhombus_ratio
-    global x_l, x_r, y_u, y_b
     global delta_area_limit, sv_max_moves, sv_max_time, collage_w, marg_coef, cam_led_bright
     global detect_timeout, show_time, gap_w, gap_h
 
@@ -92,12 +91,6 @@ def import_parameters():
             zoom_h = float(settings['zoom_h'])                   # image crop height from y, at PiCamera sensor level
             kl = float(settings['kl'])                           # coff. for PiCamera stabilization acceptance
             scale_perc = int(settings['scale_perc'])             # image resizing value (over 100), for screen plotting
-            
-            x_l = int(settings['x_l'])                           # image crop on left
-            x_r = int(settings['x_r'])                           # image crop on right
-            y_u = int(settings['y_u'])                           # image crop on top
-            y_b = int(settings['y_b'])                           # image crop on bottom
-            
             square_ratio = float(settings['square_ratio'])       # acceptance threshold for square sides difference
             rhombus_ratio = float(settings['rhombus_ratio'])     # acceptance threshold for rhombus axes difference
             delta_area_limit = float(settings['delta_area_limit'])    # acceptance threshold for facelet area dev from median
@@ -525,27 +518,6 @@ def frame_cropping(frame, width, height):
         h, w = frame.shape[:2]        # frame height and width
         return frame, w, h            # 20220817 looking to zoom property of PiCamera moodule
 
-############################################################################
-################## approach used untill 03 sept 2022 #######################
-#
-#         x_l = 2     # pixels to remove on width from left side
-#         x_r = 260   # pixels to remove on width from right side
-#         y_u = 10    # pixels to remove on height from top side
-#         y_b = 130   # pixels to remove on height from bottom side
-#         if y_u != 0 and y_b != 0 and x_l != 0 and x_r != 0 :
-#             frame = frame[y_u: -y_b, x_l: -x_r]    # frame is sliced
-#         elif (y_u != 0 and y_b != 0) and (x_l == 0 and x_r == 0) :
-#             frame = frame[y_u: -y_b, 0: width]           # frame is sliced
-#         elif (y_u == 0 and y_b == 0) and (x_l != 0 and x_r != 0) :
-#             frame = frame[ 0: height, x_l: -x_r]          # frame is sliced
-#         else:
-#             print('Error on frame dimensions settings')
-#         w = width - x_l - x_r                    # frame width
-#         h = height - y_u - y_b                   # frame height
-#         #print(width, height, w, h)
-#         return frame, w, h
-#
-#############################################################################
 
 
 
@@ -560,16 +532,16 @@ def frame_resize(frame, w, h):
     
     At Rpi (robot), this is rather easy, as the cube and camera have fix location/distance"""
     
-    if device == 'laptop':        # case the script is running on a PC/laptop (not the robot)
+    if device == 'laptop':                           # case the script is running on a PC/laptop (not the robot)
         global first_cycle, edge, offset, k_kernel, d_iterations, e_iterations, facelets_in_width, min_area, max_area
         
-        scale_percent = 80        # percent of original size (resizing factor)
+        scale_percent = 80                           # percent of original size (resizing factor)
         if scale_percent*w/100<400:
             scale_percent = int(40000/w) 
-        if not cv_wow:            # case cv_wow variable is set false on __main__
-            ww = w                # global variable w is assigned to local variable ww
-            hh = h                # global variable h is assigned to local variable hh
-        elif cv_wow:              # case cv_wow variable is set true on __main__
+        if not cv_wow:                               # case cv_wow variable is set false on __main__
+            ww = w                                   # global variable w is assigned to local variable ww
+            hh = h                                   # global variable h is assigned to local variable hh
+        elif cv_wow:                                 # case cv_wow variable is set true on __main__
             ww = int(frame.shape[1] * scale_percent / 100)                       # new calculated frame width
             hh = int(frame.shape[0] * scale_percent / 100)                       # new calculated frame width
             frame = cv2.resize(frame, (ww, hh), interpolation = cv2.INTER_AREA)  # resized frame
@@ -872,8 +844,6 @@ def get_facelets(facelets, contour, hierarchy):
                     else:                                   # case there are not facelets to be excluded, due to large area deviation
                         if device == 'Rpi':                 # case the script is running at the robot           
                             facelets = estimate_facelets(facelets,frame, w, h)  # calls the function to estimate the remaining facelets
-#                         if device == 'laptop' and len(facelets)>=7:         
-#                             facelets = estimate_facelets(facelets,frame, w, h)  # calls the function to estimate the remaining facelets
                 
                 if screen and cv_wow:                       # case a screen is connectedand and cv_wow variables is set true on __main__                            
                     show_cv_wow(frame, show=1)              # calls the cv_wow function
@@ -3330,9 +3300,10 @@ def robot_solve_cube(fixWindPos, screen, device, frame, faces, edge, cube_status
     
     global robot_stop, robot_running, deco
     
-    robot_reading_status_display.cancel()             # de-activates visualization of elapsed time on robot_display1
-    robot_display2.Clear()                            # clears dysplay2
-    robot_display2.Clear()                            # clears dysplay2
+    robot_reading_status_display.cancel()             # de-activates visualization of elapsed time on robot_display2
+    robot_clear_displays()
+#     robot_display2.Clear()                            # clears dysplay2
+#     robot_display2.Clear()                            # clears dysplay2
     
     import Cubotone_moves as rm                       # RobotMoves: convert Kociemba solver solution in robot movements sequence
     robot_moves, total_robot_moves = rm.robot_moves(solution, solution_Text)  # dict with robot movements, and total movements
@@ -3748,11 +3719,11 @@ def time_system_synchr():
 
 
 def keep_the_show(debug):
-    """function meant for the maker Fair, to keep presenting the cv_wow in case switch at GIPO12 is closed."""
+    """function meant for the Maker Fair, to keep presenting the cv_wow in case switch at GIPO12 is closed."""
     global detection_timeout
     
     if debug:                               # case debug variable is set true
-        print('close swith at GPIO12 to keep the cv_wow show on screen') # feedback is printed to the terminal
+        print('close switch at GPIO12 to keep cv_wow windows on screen') # feedback is printed to the terminal
     delay = 0.2                             # time assigned to the delay variable
     time.sleep(delay)                       # little delay to prevent switch contact bouncing from creating bad reading
     initial_time = time.time()              # time in which this function has been called
