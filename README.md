@@ -11,7 +11,6 @@ An impression of the robot: https://www.youtube.com/watch?v=oYRXe4NyJqs
 
 This git repo simplifies the download of the individual files and automates as much a possible the deployment to the Raspberry Pi
 
-This installation has proved to work on different Raspberry Pi models; Please report in case you experience issues.
 
 # How to use it:
 1. Flash your SD card according to the procedure in the [document here](doc/How_to_make_CUBOTone_robot_20221002.pdf) , Chapter 15
