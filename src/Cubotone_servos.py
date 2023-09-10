@@ -3,7 +3,7 @@
 
 """
 #############################################################################################################
-# Andrea Favero   rev. 01 October 2022
+# Andrea Favero   rev 10 September 2023
 #
 # This script relates to CUBOTone, my first simple Rubik's cube solver robot
 # This specific script controls two servos, one stepper motor, and led module
@@ -51,17 +51,31 @@ GPIO.setup(stepper_ms2,GPIO.OUT)     # GPIO pin used to change the stepper motor
 # light_gate GPIO pin setting
 GPIO.setup(4,GPIO.IN)                # motor position sensor
 
-# Adafruit 16-Channel 12-bit PWM/Servo Driver - I2C interface - PCA9685
-pwm = Adafruit_PCA9685.PCA9685()     # Initialise the PCA9685 using the default address (0x40).
-pwm.set_pwm_freq(60)                 # sets the frequency to 60hz, good for servos.
-pwm.set_pwm(srv_cover, 0, 0)         # servo is forced off
-pwm.set_pwm(srv_flipper, 0, 0)       # servo is forced off
-pwm.set_pwm(led1, 0, 0)              # led1 is forced off, 60Hz is ok to set the output off for the led
-pwm.set_pwm(led2, 0, 0)              # led2 is forced off, 60Hz is ok to set the output off for the led
-  
+
+def init_PCA9685():
+    """ Function to initialize the PCA9685 board.
+        Adafruit 16-Channel 12-bit PWM/Servo Driver - I2C interface - PCA9685."""
+    
+    global pwm
+
+    try:
+        pwm = Adafruit_PCA9685.PCA9685()     # Initialise the PCA9685 using the default address (0x40).
+        pwm.set_pwm_freq(60)                 # sets the frequency to 60hz, good for servos.
+        pwm.set_pwm(srv_cover, 0, 0)         # servo is forced off
+        pwm.set_pwm(srv_flipper, 0, 0)       # servo is forced off
+        pwm.set_pwm(led1, 0, 0)              # led1 is forced off, 60Hz is ok to set the output off for the led
+        pwm.set_pwm(led2, 0, 0)              # led2 is forced off, 60Hz is ok to set the output off for the led
+    except:
+        print(f"\n\n#############################################################################")
+        print("WARNING: failed to load Adafruit_PCA9685 module")
+        print("This happens if the module is not found at the I2C, or library not installed.")
+        print(f"#############################################################################\n")
+        raise
 
 
-def init_servo(servos_init, debug):
+
+
+def init_servo(servos_init, debug, motor_hw = True):
     """ Function to initialize the robot (servos and motor position) and some global variables, do be called once, at the start.
     Parameters are imported from a json file, to make easier to list/document/change the variables
     that are expected to vary on each robot.
@@ -74,11 +88,16 @@ def init_servo(servos_init, debug):
     global ramp, spin_fast_ramp, spin_slow_ramp, time_on_spin_fast, time_on_spin_slow
     global align_repeats, time_on_align_fast, time_on_align_precise, timeout
     global stp_rev, extra_steps_s, extra_steps_m, extra_steps_align, align_blind_steps
-    global led_brightness, motor_reversed
-
-
-    if not servos_init:                                               # case the inititialization status of the servos is false
+    global led_brightness, motor_reversed, motors    
     
+    if not servos_init:                                               # case the inititialization status of the servos is false
+
+        if motor_hw:                                                  # case the motor_hd variable is True
+            motors = True                                             # global variable motors is set True
+            init_PCA9685()                                            # PCA9685 initialization function is called
+        else:                                                         # case the motor_hd variable is False
+            motors = False                                            # global variable motors set False
+        
         # convenient choice for Andrea Favero, to upload the settings fitting my robot, via mac address check                
         from getmac import get_mac_address                            # library to get the device MAC ddress
         import os.path, pathlib, json                                 # libraries needed for the json, and parameter import
@@ -88,7 +107,7 @@ def init_servo(servos_init, debug):
         if eth_mac == 'e4:5f:01:0a:31:ce':                            # case the script is running on AF (Andrea Favero) robot
             fname = os.path.join(folder,'Cubotone_servos_settings_AF.txt')  # AF robot settings (do not use these at the start) 
         else:                                                         # case the script is not running on AF (Andrea Favero) robot
-            fname = os.path.join(folder,'Cubotone_servos_settings.txt')     # folder and file name for the settings, to be tuned               
+            fname = os.path.join(folder,'Cubotone_servos_settings.txt')  # folder and file name for the settings, to be tuned               
         
         if os.path.exists(fname):                                           # case the servo_settings file exists
             with open(fname, "r") as f:                                     # servo_settings file is opened in reading mode
@@ -101,7 +120,7 @@ def init_servo(servos_init, debug):
                     print(parameter,': ', setting)                          # feedback is printed to the terminal
                 print()
                 
-            backup_fname = os.path.join(folder,'Cubotone_servos_settings_backup.txt')      # folder and file name for the settings backup
+            backup_fname = os.path.join(folder,'Cubotone_servos_settings_backup.txt')  # folder and file name for the settings backup
             with open(backup_fname, 'w') as f:                                    # servo_settings_backup file is opened in writing mode
                 f.write(json.dumps(servo_settings, indent=0))                     # content of the setting file is saved in another file, as backup
                 if debug:                                                         # case the variable debug is set True
@@ -137,21 +156,22 @@ def init_servo(servos_init, debug):
                 align_repeats = int(servo_settings['align_repeats'])              # max number of motor alignment iterations, when not ending successfully
                 timeout = float(servo_settings['timeout'])                        # timeout in secs for motor alignment
                 motor_reversed = int(servo_settings['motor_reversed'])            # reverse the motor direction behavior (0=default, 1=reversed)
-                if motor_reversed <= 0:
-                    motor_reversed = 0
-                elif motor_reversed >= 1:
-                    motor_reversed = 1
+                
+                if motor_reversed <= 0:                                           # case the motor_reversed argument is <= zero
+                    motor_reversed = 0                                            # motor_reversed variable is set to zero
+                elif motor_reversed >= 1:                                         # case the motor_reversed argument is >= one
+                    motor_reversed = 1                                            # motor_reversed variable is set to one
 
-                servo_start_positions(debug)
-                led_test(debug)
-                led_off()
+                servo_start_positions(debug)                                      # servos are positioned to the start position
+                led_test(debug)                                                   # top_cover Leds are shortly energized as feedback
+                led_off()                                                         # top_cover Led are set off
                 servos_init = True                                                # servos_init_status variable is set True
                 
                 return servos_init                                                # return servos_init_status variable
             
             
             except:   # exception will be raised if json keys differs, or parameters cannot be converted to float
-                print('\nerror on converting to float the imported parameters')     # feedback is printed to the terminal                                  
+                print('\nerror on converting to float the imported parameters')   # feedback is printed to the terminal                                  
                 servos_init = False                                               # servos_init_status variable is set False
                 return servos_init                                                # return servos_init_status variable
         
@@ -160,12 +180,35 @@ def init_servo(servos_init, debug):
             servos_init = False                                                   # servos_init_status variable is set False
             return servos_init                                                    # return servos_init_status variable
 
+
+
+
+
+def extra_rotation_adj(debug, cube_size_adj):
+    """modifies the extra rotations (SPIN and ROTATE) based on the cube size difference from the default setting.
+       Cube size difference is expressed in tent of millimeters"""
     
+    global extra_steps_s, extra_steps_m
+    
+    if debug:                                  # case the variable debug is set True
+        print("original extra_steps_s", extra_steps_s)  # feedback is printed to Terminal
+        print("original extra_steps_m", extra_steps_m)  # feedback is printed to Terminal
+        
+    extra_steps_s = int(extra_steps_s - cube_size_adj*extra_steps_s/20)  # extra_steps_s is adjusted
+    extra_steps_m = int(extra_steps_m - cube_size_adj*extra_steps_m/20)  # extra_steps_m is adjusted
+    
+    if debug:                                  # case the variable debug is set True
+        print("adjusted extra_steps_s", extra_steps_s)  # feedback is printed to Terminal
+        print("adjusted extra_steps_m", extra_steps_m)  # feedback is printed to Terminal
+
 
 
 
 def servo_freq(debug):
     """sets the PCA9685 output frequency for the servo. Servo require tipically 60Hz."""
+    
+    if not motors:
+        return
     
     pwm.set_pwm_freq(60)                        # sets the frequency to 60Hz
     time.sleep(0.05)                            # little time sleep to let the parameter change to get processed by the PCA 9685 board
@@ -178,6 +221,9 @@ def servo_freq(debug):
 
 def led_freq(debug):
     """sets the PCA9685 output frequency for the leds. PWM Leds at 60Hz is bad for the camera, and at least 1KHz needed."""
+    
+    if not motors:
+        return
     
     servo_off(debug=False)                      # set the servo to off, to prevent unexpected reaction at the frequency change
     pwm.set_pwm_freq(1000)                      # sets the frequency to 1000Hz
@@ -192,6 +238,9 @@ def led_freq(debug):
 def servo_start_positions(debug,wait_time=True):
     """initial position for the top cover and cube flipper; The parameter defines the sleep time before returning"""
     
+    if not motors:
+        return
+
     servo_freq(debug)
     read_cover()                                # initial position for the cover is fully high, to prevent interference with base rotation while zeroing it                             
     if wait_time:                               # case wait_time in ar is left as per default
@@ -208,6 +257,9 @@ def servo_start_positions(debug,wait_time=True):
 def servo_off(debug):
     """disable the servo."""
     
+    if not motors:
+        return
+    
     time.sleep(0.2)                        # some little wait time to ensure servos have completed the eventual movement, prior removing the PWM
     pwm.set_pwm(srv_cover, 0, 0)           # servo is forced off, in case the target wasn't reached in time (blocked movement)
     pwm.set_pwm(srv_flipper, 0, 0)         # servo is forced off, in case the target wasn't reached in time (blocked movement)
@@ -219,6 +271,9 @@ def servo_off(debug):
 
 def led_cover(value=200):
     """ Sets the top_cover led ON, with brightness in arg. Value ranges from 0 to 4095, yet it will be limited to 2000"""
+
+    if not motors:
+        return
     
     if value >= 2000:                     # case arg is bigger than, or equal to 1200
         pwm.set_pwm(led1, 0, 2000)        # led1 is energized at 2000 (ca 50% of max intensity)
@@ -232,6 +287,10 @@ def led_cover(value=200):
 
 def led_off():
     """disable the led."""
+    
+    if not motors:
+        return
+    
     pwm.set_pwm(led1, 0, 0)               # led1 is forced off
     pwm.set_pwm(led2, 0, 0)               # led2 is forced off
 
@@ -240,6 +299,9 @@ def led_off():
 
 def led_test(debug):
     """ Fade the led On and Off at the init, to show the led worwing."""
+    
+    if not motors:
+        return
     
     led_freq(debug)
     for i in range(0,800,50):            # iterates from 0 to 700 in steps of 100
@@ -258,6 +320,10 @@ def led_test(debug):
 
 def read_cover():
     """Top cover position fully opened; The parameter defines the sleep time before returning""" 
+
+    if not motors:
+        return
+    
     pwm.set_pwm(srv_cover, 0, cover_read)   # pwm to the servo to reach the target position
     sleep(time_cover_reading)  # (AF 0.18)  # time necessary to servo to reach the target
 
@@ -266,6 +332,10 @@ def read_cover():
 
 def open_cover(fast_speed=False):
     """Top cover position fully opened; The parameter defines the sleep time before returning""" 
+    
+    if not motors:
+        return
+
     if fast_speed==True:
         pwm.set_pwm(srv_cover, 0, cover_open)    # pwm to the servo to reach the target position, without sleep time afterward
         sleep(time_cover_opening-0.05)           # (AF 0.1)   # time necessary to servo to get the top_cover out from the cube
@@ -279,6 +349,10 @@ def open_cover(fast_speed=False):
 
 def close_cover():
     """Top cover position fully closed; The parameter defines the sleep time before returning""" 
+    
+    if not motors:
+        return
+    
     pwm.set_pwm(srv_cover, 0, cover_close)       # pwm to the servo to reach the target position
     sleep(time_cover_closing)  # (AF 0.22)       # time necessary to servo to reach the target
 
@@ -287,6 +361,10 @@ def close_cover():
 
 def cube_flipper_high(time_flipper_high):
     """Flipper lever fully high, he parameter defines the sleep time before returning""" 
+    
+    if not motors:
+        return
+    
     pwm.set_pwm(srv_flipper, 0, flipper_high)     # pwm to the servo to reach the target position
     sleep(time_flipper_high)  # (AF 0.35)         # time necessary to servo to reach the target
 
@@ -295,6 +373,10 @@ def cube_flipper_high(time_flipper_high):
 
 def cube_flipper_low(time_flipper_low):
     """Flipper lever fully low, he parameter defines the sleep time before returning""" 
+    
+    if not motors:
+        return
+        
     pwm.set_pwm(srv_flipper, 0, flipper_low)      # pwm to the servo to reach the target position
     sleep(time_flipper_low)   # (AF 0.35)         # time necessary to servo to reach the target
 
@@ -304,6 +386,9 @@ def cube_flipper_low(time_flipper_low):
 def flip(flips, debug, align, go, fast=False):
     """Flipper sequence to flip the cube, without using the top cover as guide;
         The parameter defines the sleep time before returning""" 
+    
+    if not motors:
+        return True
     
     if align != 'read':                            # case the aglin is not equal to 'read'
         align = 'open'                             # align is set to 'open'
@@ -327,6 +412,10 @@ def flip(flips, debug, align, go, fast=False):
 
 def motor_off(debug):
     """disable the motor."""
+
+    if not motors:
+        return
+    
     GPIO.output(stepper_enable,GPIO.HIGH)          # driver disabled
     if debug:                                    # case the variable debug is set True
         print('stepper motor is disabled')         # feedback is printed to the terminal
@@ -377,6 +466,10 @@ def motor_steps(n, on_time, off_time, variation, debug):
 
 def spin(rotations, debug, speed='high'):
     """cube_holder spinning function (meaning rotation of the cube_holder with opened top_cover)."""
+    
+    if not motors:
+        return
+    
     if speed == 'high':                     # two main rotation speed are set: high is meant when there is no cube layer to rotate
         on_time=time_on_spin_fast           # (AF 0.001 for DRV8825, 0.00065 for DRV A4988)
         variation=spin_fast_ramp            # (AF 0.024) time variation used to generate a stepper ramp on speed
@@ -436,6 +529,10 @@ def spin(rotations, debug, speed='high'):
 
 def rotate(rotations, debug, fast_speed=False):
     """cube_holder rotation function (meaning spinning the cube_holder with closed top_cover)."""
+    
+    if not motors:
+        return
+        
     if sensor_check() == False:         # check motor alignment prior to start
         align_motor(debug, 'open')      # motor is aligned in case it wasn't
     close_cover()                       # top cover is closed
@@ -458,8 +555,9 @@ def sensor_check():
 def align_motor(debug, cover='read'):
     """Motor alignment to the motor's sensor')"""
     
-    # uncomment the below return command when testing the script without having all the components (motor, servos, etc) connected together
-    # return
+    if not motors:        # case motors is set false (testing robot without servos and step motor)
+        return True       # function is returned without aligning the motor
+    
     alignment_ok = False                                 # boolean alignment_ok is set initially false
     
     if sensor_check() == 1:                              # case the light_gate sensor is not sensing the sync disk slot
@@ -694,6 +792,9 @@ def align_motor(debug, cover='read'):
 def solve_cube(robot, debug):
     """function that actuates the servos and the stepper motor to solve the cube, according to the received dict of robot movements."""
 
+    if not motors:        # case motors is set false (testing robot without servos and step motor)
+        return 'test with motors disabled'     # function is returned without aligning the motor
+    
     for moves in robot.values():                                # iteration over the received dict values with the robot movements
         if debug:                                               # case the variable debug is set True
             print(moves)                                        # feedback is printed to the terminal
@@ -721,6 +822,9 @@ def solve_cube(robot, debug):
 
 def fun(debug):
     """spins the cube_holder back and forward a few times to capture attention once the cube is solved."""
+    
+    if not motors:        # case motors is set false (testing robot without servos and step motor)
+        return            # function is returned without aligning the motor
     
     if debug:                                     # case the variable debug is set True
         print('\nfun function')                   # feedback is printed to the terminal
@@ -777,7 +881,8 @@ if __name__ == "__main__":
     """this is only meant to be used with an IDE: below test functions have to be recalled at REPL."""
     import time
     
-    s_debug=True
+    motors = True        # motors is set true (testing robot with servos and step motor)
+    s_debug = True
     servos_init_status = False
     led_brightness = 1000
     servos_init_status = init_servo(servos_init_status, s_debug)
@@ -885,3 +990,4 @@ def test6():
         open_cover()
         
         
+
