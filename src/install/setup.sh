@@ -50,6 +50,7 @@ python3 -m venv .virtualenvs --system-site-packages
 source .virtualenvs/bin/activate
 
 print_header "Installing required python packages"
+pip3 install --upgrade pip
 pip3 install numpy==1.21.4
 pip3 install "picamera[array]"
 pip3 install RubikTwoPhase==1.0.9
