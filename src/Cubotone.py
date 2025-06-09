@@ -4494,7 +4494,7 @@ if __name__ == "__main__":
         while True:                                          # infinite loop, waiting for the start button to be pressed
             new_cycle_button = GPIO.input(13)                # GPIO input is assigned to a new_cycle_button variable
             if cube_scrambling:                              # case the cube_scrambling is set True
-                crambling_cube()                             # scrambling_cube function is called
+                scrambling_cube()                            # scrambling_cube function is called
                 time.sleep(1)                                # little sleep time
                 robot_show_press.start()                     # suggestion on the display to press the NEW CYCLE button, as settings are done
             cube_scrambling = False                          # cube_scrambling variable is set False
